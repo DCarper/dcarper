@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: BDD | Dream Agile]]></title>
+  <link href="http://DCarper.github.com/DCarper/blog/categories/bdd/atom.xml" rel="self"/>
+  <link href="http://DCarper.github.com/DCarper/"/>
+  <updated>2012-01-03T13:50:50-05:00</updated>
+  <id>http://DCarper.github.com/DCarper/</id>
+  <author>
+    <name><![CDATA[Dan Carper]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[TESTimony]]></title>
+    <link href="http://DCarper.github.com/DCarper/blog/2011/12/23/testimony/"/>
+    <updated>2011-12-23T11:15:00-05:00</updated>
+    <id>http://DCarper.github.com/DCarper/blog/2011/12/23/testimony</id>
+    <content type="html"><![CDATA[<h3>Preface</h3>
+
+<p>This is a high level musing on TDD/BDD. I'm far from a guru so everything should be considered up for debate.</p>
+
+<p>I try to stay as general as possible but a lot of what I say is in the context of a Rails app.</p>
+
+<h3>Why write automated tests?</h3>
+
+<p>Because you're going to test anyway. You're <em>are</em> going to run some code after every tiny little change right? You're either going to refresh the gui or reload your console. Chances are you need a specific setup to test the bit of code you're working with as well. I can remember before I started writing test scripts that I would up-tab through a good 4-5 lines in addition to a possible browser refresh / clicks / form interaction. If you think you can do this by hand faster than a script you are out of your mind.</p>
+
+<p>It also allows you to test code in isolation. Through test doubles such as mocks, stubs, and spies it becomes very easy to eliminate dependencies of a given piece of code. These doubles also allow you to manipulate things like time which are not-so-cool to work with otherwise.</p>
+
+<p>Good tests also lead to cleaner code. Truth.</p>
+
+<p>You're also able to easily pop open a debugger console within any part of the stack. From here, you can see what variables are defined and what methods they have access to. This helps soften the blow of not having an IntelliType functionality.</p>
+
+<p>Last but certainly not least, there is the regression factor. When I add a new feature to an existing codebase, I break things more often then not. It's completely impractical to believe I could go in and test every function point by hand of the application for a tiny little tweak. With a trust-worthy test-suite, it is very nice to be able to say, "Well all tests are passing so I'm gonna deploy".</p>
+
+<h3>Why write tests first?</h3>
+
+<p>Because you'll never write them otherwise. Because you <em>only</em> gain the regression benefit if you <em>don't</em> write them first. Because if you do indeed have working code first, you've broken red-green-refactor.</p>
+
+<h3>Why red-green-refactor?</h3>
+
+<p>A tree that falls in the woods <em>doesn't</em> make a noise unless some being is around to observe. A solid 90% of the time you will eliminate 100% of you're false positives by writing a test, watching it fail, then writing the code to make it pass.</p>
+
+<p>Fail-pass-refactor also faciliates getting the job done quickly (write just enough code to meet the requirements). It also facilitates getting the job done correctly. After you've thrown mud on the wall till requirements are met, evaluate your code and clean things up, all under the safety net of tests that <em>were</em> passing at one point.</p>
+
+<h3>Why NOT one-assertion-per-test</h3>
+
+<p>This is a controversial topic. Google it if you're not familiar.</p>
+
+<p>In general I'm against blanket rules like this. As an apprentice craftsman, artist, and Rubyist I will do what I think is most beautiful at any given time. I'm all for one ACTION per test. You have your setup, you take an action, and you look for the results.</p>
+
+<p>The arguments FOR one assertion-per-test seem great in theory but fall apart in the trenches. This topic really deserves a separate blog post so I won't get too into things here.</p>
+
+<h3>What kind of tests are there?</h3>
+
+<p>Bunches. Unit, integration, functional, acceptance, etc. As far as I'm concerned, there are two kinds of tests. If you're simulating a user-action then it's an acceptance test. If you're testing a specific small bit of code then it's a unit test.</p>
+
+<h3>Acceptance Tests</h3>
+
+<p><em>Fill this form out</em> then <em>look for the confirmation</em></p>
+
+<p><em>Click this link</em> then <em>I should be on the homepage</em></p>
+
+<p>Acceptance tests simulate the user. There's usually longer strings of steps involved with navigatin and interaction. I like using the Gherkin gem to group blocks of code to plaintext signatures like, "When I register as a new user" to really capture what is going on at a high level.</p>
+
+<p>``` ruby Feature</p>
+
+<p>Feature: Product Registration</p>
+
+<pre><code>In order register a product
+As anyone..
+I should be able submit a form to register a product
+
+Scenario: I should be able to register an Widget
+    When I fill in my info
+    And I register a Widget
+    Then I should see a confirmation
+</code></pre>
+
+<p>```</p>
+
+<p>``` ruby Step Definitions
+When /<sup>I</sup> fill in my info$/ do
+  fill_in('product_registration_first_name', :with => 'Andy')
+  fill_in('product_registration_last_name',  :with => 'Smith')
+  fill_in('product_registration_address1',   :with => '40 24th St')
+  fill_in('product_registration_city',       :with => 'Pittsburgh')
+  fill_in('product_registration_zip',        :with => '15222')
+  fill_in('product_registration_email',        :with => 'who@who.com')
+  select('PA', :from => 'product_registration_state')
+end</p>
+
+<p>When /<sup>I</sup> register a Widget$/ do
+  select_product('Widget')
+end</p>
+
+<p>Then /<sup>I</sup> should see a confirmation$/ do</p>
+
+<pre><code>page.should have_content('Thanks for registering your Widget!!!')
+</code></pre>
+
+<p>end</p>
+
+<p>def select_product(product)
+  select(product, :from => 'product_registration_product_id')
+end
+```</p>
+
+<p>I think the above is much more meaningful than cramming all of the actual code into one long script.</p>
+
+<p>As far as web apps go, I think navigation and form interaction are the only things worthy of an acceptance test. Even dynamic view rendering <em>only</em> happens on the server. I could see a case being made for having acceptance tests for in-page behavior (IE display this modal). However acceptance tests are usually much slower than unit tests, and javascript can be tested very well with tools like Jasmine.</p>
+
+<p>Another flag to look for as far as client-server based apps. If you're test is not bouncing back and forth between the client and server at least once after the initial request is made, then it doesn't get an acceptance test. Acceptance tests drill down through the whole stack and then right back up.</p>
+
+<h3>Unit Tests</h3>
+
+<p>Why are unit tests necessary? Because an acceptance tests covers a ton of code at all levels of the stack and probably involve a more expensive setup than what you need to test if a user can access a given article.</p>
+
+<p>Unit tests are much faster because of this. A unit test might look something like...</p>
+
+<p>```ruby user_spec.rb
+describe User do</p>
+
+<p>  before(:each) do</p>
+
+<pre><code>@user = Factory(:user)
+</code></pre>
+
+<p>  end</p>
+
+<p>  describe "validations" do</p>
+
+<pre><code>it "should validate presence of first name" do
+  should validate_presence_of(:first_name) 
+    end
+</code></pre>
+
+<p>  end</p>
+
+<p>  describe "#can_enter_contest?" do</p>
+
+<pre><code>it "should return true if the user has no entries" do
+  @user.can_enter_contest?.should be_true
+end
+
+it "should return false if the user create" do
+  Factory(:entry, :user =&gt; @user)
+  @user.reload.can_enter_contest?.should be_false
+end
+
+it "should return true if last entry was created yesterday" do
+  Factory(:entry, :user =&gt; @user)
+  Timecop.travel(Chronic.parse('midnight'))
+  @user.can_enter_contest?.should be_true
+end
+</code></pre>
+
+<p>  end</p>
+
+<p>end
+```</p>
+
+<p>I'm pretty framework agnostic. I have the most experience with Rspec. A good framework should provide cascading setups and teardowns. A good framework should also facilitate <em>matchers</em> or domain-specific test methods such as <em>#validate_presence_of</em></p>
+
+<p>So what exactly gets unit-tested?</p>
+
+<p><strong>View:</strong> javascript, aesthetics, and dynamic rendering.</p>
+
+<p><strong>Controller:</strong> template rendering and redirects.</p>
+
+<p><strong>Model:</strong> Scopes, queries, callbacks, validations, and any other methods.</p>
+
+<p><strong>Routes:</strong> Routes can easily be unit-tested but I feel like they're always covered somewhere else so I tend to not unit-test these.</p>
+
+<h3>Quandry</h3>
+
+<p>To date, I've tested dynamic rendering with acceptance tests. I see the fail first in the view template, then I add in the code <em>&lt;%= @user.first_name %></em> which fails because @user doesn't exist, so then I initialize it in the controller and I'm green. However, there's no client-server-client action here. It's just a request. As such I don't think it's worthy of the overhead associated with acceptance tests.</p>
+
+<p>The coupling between a view-template and its corresponding controller-action seems much more like an integration test to me. At least within Rspec controller tests, you can <em>#render_views</em> and look for content in the response. This seems much more useful than #assigning specific instance variables and rendering a template by filename, and much more lightweight than firing up an acceptance test. I have yet to try this however and am totally open to debate.</p>
+
+<h3>Other helpful testing tools</h3>
+
+<p>Factories. Never create data by hand, and don't use fixtures. Fixtures are the opposite of maintainable and extendable. Factories allow you to automate and DRY up all of your data needs. I like factory_girl.</p>
+
+<p>Database management. Find a tool that cleanses the data automatically after each test or you will get very hard-to-debug fails.</p>
+
+<p>Mocks and stubs. Many frameworks provide these out of the box. I prefer mocha which lets you say things like, <em>User.any_instance.stubs(:first_name).etc</em></p>
+
+<p>Time management. If you have time sensitive code and you're using a well-supported language, there's probably a wrapper library which lets you eloquently jump back and forth through time.</p>
+
+<h3>Putting it all together</h3>
+
+<p>So how does this all work together in the trenches? Lets assume we have a brand new rails app and we need to build a user-registration form.</p>
+
+<ol>
+<li>Write an acceptance test... Fill out the user form, look for a placeholder to signify being logged in.
+
+<ul>
+<li>Fails because there is no form</li>
+</ul>
+</li>
+<li>Write the form
+
+<ul>
+<li>Fails because you've referenced @user that hasn't been defined.</li>
+</ul>
+</li>
+<li>Unit-test a controller, make sure the action renders the correct template
+
+<ul>
+<li>Fails because there is no controller</li>
+</ul>
+</li>
+<li>Write the controller
+
+<ul>
+<li>Initially passes because you're not defining user yet</li>
+<li>Your acceptance test still fails because @user is still not defined</li>
+<li>Define @user</li>
+<li>controller test fails now because there is no User class</li>
+</ul>
+</li>
+<li>Unit-test the User model
+
+<ul>
+<li>fails because there is no User model</li>
+</ul>
+</li>
+<li>Create the User model</li>
+<li>User unit-tests pass</li>
+<li>User's Controller tests pass</li>
+<li>You're original acceptance test passes</li>
+<li>Success!</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>
